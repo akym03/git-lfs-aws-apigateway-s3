@@ -25,10 +25,10 @@ jobs:
         pipenv sync --dev
     - name: Run test
       run: |
-        pipenv run pytest --cov=hello_world --cov-report=html
+        pipenv run pytest --cov=git_lfs_aws_lambda --cov-report=html
     - name: Run Lint with flake8
       run: |
-        pipenv run flake8 --ignore=E501 hello_world tests
+        pipenv run flake8 --ignore=E501 git_lfs_aws_lambda tests
     - name: Archive code coverage results
       if: always()
       uses: actions/upload-artifact@v1

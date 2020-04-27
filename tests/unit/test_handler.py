@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from hello_world import app
+from git_lfs_aws_lambda import app
 
 
 @pytest.fixture()
