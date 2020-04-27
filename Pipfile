@@ -9,6 +9,9 @@ pytest-mock = "*"
 
 [packages]
 flake8 = "*"
+pytest = "*"
+requests = "*"
+mocker = "*"
 
 [requires]
 python_version = "3.8"
