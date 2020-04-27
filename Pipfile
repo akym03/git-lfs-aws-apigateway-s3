@@ -6,6 +6,8 @@ verify_ssl = true
 [dev-packages]
 pytest = "*"
 pytest-mock = "*"
+pytest-cov = "*"
+v = {editable = true,version = "*"}
 
 [packages]
 flake8 = "*"

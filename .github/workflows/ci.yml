@@ -25,8 +25,13 @@ jobs:
         pipenv sync --dev
     - name: Run test
       run: |
-        pipenv run pytest 
+        pipenv run pytest --cov=hello_world --cov-report=html
     - name: Run Lint with flake8
       run: |
         pipenv run flake8 --ignore=E501 hello_world tests
-    
+    - name: Archive code coverage results
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: code-coverage-report
+        path: htmlcov
