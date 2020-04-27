@@ -26,3 +26,7 @@ jobs:
     - name: Run test
       run: |
         pipenv run pytest 
+    - name: Run Lint with flake8
+      run: |
+        pipenv run flake8 --ignore=E501 hello_world tests
+    
