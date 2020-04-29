@@ -8,12 +8,12 @@ pytest = "*"
 pytest-mock = "*"
 pytest-cov = "*"
 v = {editable = true,version = "*"}
+mocker = "*"
+flake8 = "*"
 
 [packages]
-flake8 = "*"
-pytest = "*"
 requests = "*"
-mocker = "*"
+boto3 = "*"
 
 [requires]
 python_version = "3.8"
