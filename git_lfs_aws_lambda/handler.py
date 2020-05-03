@@ -9,21 +9,21 @@ class Handler:
             result = self.lambda_response(response['statusCode'], response['body'])
         except Exception as e:
             code = 500
-            body = self.git_lfs_error(e.args[0], self.getDocUrl(code), context['awsRequestId'])
+            body = self.git_lfs_error(e.args[0], self.get_doc_url(code), context['awsRequestId'])
             result = self.lambda_response(code, body)
 
         callback(None, result)
 
-    def git_lfs_error(self, message, docUrl, requestId):
+    def git_lfs_error(self, message, doc_url, request_id):
         return {
-            "request_id": requestId,
-            "documantation_url": docUrl,
+            "request_id": request_id,
+            "documantation_url": doc_url,
             "message": message,
         }
 
-    def lambda_response(self, statusCode, body):
+    def lambda_response(self, status_code, body):
         return {
-            "statusCode": statusCode,
+            "statusCode": status_code,
             "headers": {
                 "content-type": "application/json"
             },
@@ -33,5 +33,5 @@ class Handler:
     def process(self, request):
         return {}
 
-    def getDocUrl(self, statusCode):
+    def get_doc_url(self, status_code):
         return "EMPTY DOC"
