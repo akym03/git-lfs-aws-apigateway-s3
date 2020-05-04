@@ -22,15 +22,18 @@
     "python.pythonPath": "${workspaceRoot}/.venv/scripts/python",
     "python.venvPath": "venv",
     "python.pipenvPath": "${USERPROFILE}/pyenv/pyenv-win/shims/pipenv",
-    "python.testing.pytestEnabled": false,
+    "python.testing.pytestEnabled": true,
     "python.testing.nosetestsEnabled": false,
-    "python.testing.unittestEnabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.mypyEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.linting.pylintEnabled": false,
+    "python.linting.mypyEnabled": false,
     "python.linting.flake8Enabled": true,
-    "python.linting.pep8Enabled": true,
-    "python.linting.pep8Args": ["--ignore=E501"],
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pycodestyleArgs": ["--ignore=E501"],
     "python.linting.flake8Args": [
         "--max-line-length=120"
+    ],
+    "python.testing.pytestArgs": [
+        "tests"
     ],
 }
