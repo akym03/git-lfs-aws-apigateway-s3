@@ -203,7 +203,7 @@ class TestObjectHandler:
                 if (key == TestObjectHandler.MISSING_KEY_2):
                     raise Exception("Should not be uploading this!")
 
-                raise Exception("Unhandled test exception: upload")
+                raise Exception("Unhandled test exception: download")
 
             mocker.patch('git_lfs_aws_lambda.datastore.Datastore.exists').side_effect = mock_exists
             mocker.patch('git_lfs_aws_lambda.datastore.Datastore.get_download_url').side_effect = mock_get_download_url
@@ -301,3 +301,88 @@ class TestObjectHandler:
             assert actual["objects"][1]["actions"]["download"]["href"] == \
                 TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_1)
             assert actual["objects"][1]["actions"]["download"]["expires"] > 0
+
+    class TestVerify:
+
+        @pytest.fixture(scope='function', autouse=True)
+        def setup(self, mocker):
+            def mock_exists(key):
+                if (key == TestObjectHandler.EXISTING_KEY_1):
+                    return True
+                if (key == TestObjectHandler.MISSING_KEY_1):
+                    return False
+
+                raise Exception("Unhandled test exception: exist")
+
+            def mock_get_info(key):
+                if (key == TestObjectHandler.EXISTING_KEY_1):
+                    return {"ContentLength": TestObjectHandler.EXISTING_KEY_SIZE}
+                if (key == TestObjectHandler.MISSING_KEY_1):
+                    return None
+
+                raise Exception("Unhandled test exception: get_info")
+
+            mocker.patch('git_lfs_aws_lambda.datastore.Datastore.exists').side_effect = mock_exists
+            mocker.patch('git_lfs_aws_lambda.datastore.Datastore.get_info').side_effect = mock_get_info
+
+            self.handler = ObjectHandler(
+                "verify",
+                Datastore(),
+                TestObjectHandler.INTEGRATION_ENDPOINT,
+                "/test/resource/path")
+
+        def test_should_verify_correct_object(self, mocker):
+            body = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": TestObjectHandler.EXISTING_KEY_SIZE}
+            given = TestObjectHandler.request_with_body(body, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 200
+
+            actual = json.loads(response["body"])
+
+            assert actual == body
+
+        def test_should_verify_incorrect_object(self, mocker):
+            body = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 12}
+            given = TestObjectHandler.request_with_body(body, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 411
+
+            actual = json.loads(response["body"])
+
+            assert actual["message"] == f"Expected object of size 12 but found {TestObjectHandler.EXISTING_KEY_SIZE}"
+
+        def test_should_verify_missing_object(self, mocker):
+            body = {"oid": TestObjectHandler.MISSING_KEY_1, "size": TestObjectHandler.EXISTING_KEY_SIZE}
+            given = TestObjectHandler.request_with_body(body, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 404
+
+            actual = json.loads(response["body"])
+
+            assert actual["message"] == f"Object {TestObjectHandler.MISSING_KEY_1} not found."
+
+        def test_should_wrap_other_errors(self, mocker):
+            body = {"oid": "boom", "size": TestObjectHandler.EXISTING_KEY_SIZE}
+            given = TestObjectHandler.request_with_body(body, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 500
+
+            actual = json.loads(response["body"])
+
+            assert actual["message"] == f"Unhandled test exception: get_info"

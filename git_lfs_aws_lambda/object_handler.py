@@ -19,6 +19,8 @@ class ObjectHandler(Handler):
             self.process = self.__upload_process
         elif(operation == "download"):
             self.process = self.__download_process
+        elif(operation == "verify"):
+            self.process = self.__verify_process
         else:
             raise LfsError("401", f"Unsupported object operation: [{operation}]")
 
@@ -111,11 +113,38 @@ class ObjectHandler(Handler):
 
         return response
 
+    def __handle_verify(self, request):
+        oid = request["oid"]
+        info = self.datastore.get_info(oid)
+
+        result = "NotFound" if info is None else "Verified" if info["ContentLength"] == request["size"] else "WrongSize"
+        found = None if info is None else {"oid": request["oid"], "size": info["ContentLength"]}
+
+        return {
+            "result": result,
+            "request": request,
+            "found": found
+        }
+
     def __to_response_format(self, response):
         return {
             "transfer": ObjectHandler.TRANSFER_TYPE,
             "objects": response
         }
+
+    def __to_response_format_of_verify(self, request, response):
+        result = response["result"]
+        if (result == "Verified"):
+            return request
+        if (result == "NotFound"):
+            oid = request["oid"]
+            raise LfsError(404, f"Object {oid} not found.")
+        elif (result == "WrongSize"):
+            request_size = request["size"]
+            found_size = response["found"]["size"]
+            raise LfsError(411, f"Expected object of size {request_size} but found {found_size}")
+
+        raise Exception(f"Unkown verification result {result}")
 
     def __upload_process(self, request):
         self.__verify_transfer_type(request)
@@ -126,6 +155,10 @@ class ObjectHandler(Handler):
         self.__verify_transfer_type(request)
         response = self.__handle_download(request)
         return self.__to_response_format(response)
+
+    def __verify_process(self, request):
+        verified = self.__handle_verify(request)
+        return self.__to_response_format_of_verify(request, verified)
 
     def get_doc_url(self, status_code):
         return "https://github.com/git-lfs/git-lfs/blob/master/docs/api/batch.md"
