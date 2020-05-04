@@ -4,6 +4,7 @@ import re
 
 from git_lfs_aws_lambda.object_handler import ObjectHandler
 from git_lfs_aws_lambda.datastore import Datastore
+from git_lfs_aws_lambda.lfs_error import LfsError
 
 
 class TestObjectHandler:
@@ -288,8 +289,6 @@ class TestObjectHandler:
             assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
             assert len(actual["objects"]) == 2
 
-            print(actual)
-
             assert actual["objects"][0]["oid"] == "boom"
             assert actual["objects"][0]["size"] == 10
             assert "actions" not in actual["objects"][0]
@@ -386,3 +385,17 @@ class TestObjectHandler:
             actual = json.loads(response["body"])
 
             assert actual["message"] == f"Unhandled test exception: get_info"
+
+    class TestOperation:
+
+        def test_should_given_unknows_operation(self, mocker):
+
+            try:
+                ObjectHandler(
+                    "boom",
+                    Datastore(),
+                    TestObjectHandler.INTEGRATION_ENDPOINT,
+                    "/test/resource/path")
+            except LfsError as actual:
+                assert actual.args[0] == 401
+                assert actual.args[1] == "Unsupported object operation: [boom]"

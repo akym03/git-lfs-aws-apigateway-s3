@@ -24,7 +24,7 @@ class ObjectHandler(Handler):
         elif(operation == "verify"):
             self.process = self.__verify_process
         else:
-            raise LfsError("401", f"Unsupported object operation: [{operation}]")
+            raise LfsError(401, f"Unsupported object operation: [{operation}]")
 
     def __get_verify_url(self):
         endpoint = self.endpoint
