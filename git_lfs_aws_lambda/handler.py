@@ -1,9 +1,12 @@
 import json
+from logging import getLogger
 
 from git_lfs_aws_lambda.lfs_error import LfsError
 
 
 class Handler:
+    logger = getLogger(__name__)
+
     def handle(self, event, context, callback):
         request = json.loads(event['body'])
         try:
@@ -14,6 +17,7 @@ class Handler:
             body = self.git_lfs_error(ex_message, self.get_doc_url(ex_code), context['awsRequestId'])
             result = self.lambda_response(ex_code, body)
         except Exception as ex:
+            Handler.logger.exception(ex)
             ex_message = ex.args[0]
             code = 500
             body = self.git_lfs_error(ex_message, self.get_doc_url(code), context['awsRequestId'])

@@ -1,4 +1,4 @@
-import traceback
+from logging import getLogger
 
 from git_lfs_aws_lambda.action import Action
 from git_lfs_aws_lambda.handler import Handler
@@ -8,6 +8,8 @@ from git_lfs_aws_lambda.lfs_error import LfsError
 class ObjectHandler(Handler):
     TRANSFER_TYPE = "basic"
     LINK_EXPIRATION_TIME = 900
+
+    logger = getLogger(__name__)
 
     def __init__(self, operation, datastore, endpoint, resource_path):
 
@@ -66,9 +68,7 @@ class ObjectHandler(Handler):
                     "message": e.args[1]
                 }
             except Exception as e:
-                # TODO error logging
-                print(e)
-                print(traceback.format_exc())
+                ObjectHandler.logger.exception(e)
                 directive["error"] = {
                     "code": 500,
                     "message": e.args[0]
@@ -101,9 +101,7 @@ class ObjectHandler(Handler):
                     "message": e.args[1]
                 }
             except Exception as e:
-                # TODO error logging
-                print(e)
-                print(traceback.format_exc())
+                ObjectHandler.logger.exception(e)
                 directive["error"] = {
                     "code": 500,
                     "message": e.args[0]
