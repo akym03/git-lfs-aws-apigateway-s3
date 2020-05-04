@@ -175,5 +175,129 @@ class TestObjectHandler:
                 is not None
 
     class TestDownloads:
-        def test_should_process_valid_download_request(self):
-            pass
+
+        def __download_url_for(key):
+            return "DOWNLOAD_" + key
+
+        @pytest.fixture(scope='function', autouse=True)
+        def setup(self, mocker):
+            def mock_exists(key):
+                if (key == TestObjectHandler.EXISTING_KEY_1):
+                    return True
+                if (key == TestObjectHandler.EXISTING_KEY_2):
+                    return True
+                if (key == TestObjectHandler.MISSING_KEY_1):
+                    return False
+                if (key == TestObjectHandler.MISSING_KEY_2):
+                    return False
+
+                raise Exception("Unhandled test exception: exist")
+
+            def mock_get_download_url(key):
+                if (key == TestObjectHandler.EXISTING_KEY_1):
+                    return TestObjectHandler.TestDownloads.__download_url_for(key)
+                if (key == TestObjectHandler.EXISTING_KEY_2):
+                    return TestObjectHandler.TestDownloads.__download_url_for(key)
+                if (key == TestObjectHandler.MISSING_KEY_1):
+                    raise Exception("Should not be uploading this!")
+                if (key == TestObjectHandler.MISSING_KEY_2):
+                    raise Exception("Should not be uploading this!")
+
+                raise Exception("Unhandled test exception: upload")
+
+            mocker.patch('git_lfs_aws_lambda.datastore.Datastore.exists').side_effect = mock_exists
+            mocker.patch('git_lfs_aws_lambda.datastore.Datastore.get_download_url').side_effect = mock_get_download_url
+
+            self.handler = ObjectHandler(
+                "download",
+                Datastore(),
+                TestObjectHandler.INTEGRATION_ENDPOINT,
+                "/test/resource/path")
+
+        def test_should_process_valid_download_request(self, mocker):
+            fake_a = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 10}
+            fake_b = {"oid": TestObjectHandler.EXISTING_KEY_2, "size": 20}
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 200
+
+            actual = json.loads(response["body"])
+
+            assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
+            assert len(actual["objects"]) == 2
+
+            assert actual["objects"][0]["oid"] == TestObjectHandler.EXISTING_KEY_1
+            assert actual["objects"][0]["size"] == 10
+            assert actual["objects"][0]["actions"]["download"]["href"] == \
+                TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_1)
+            assert actual["objects"][0]["actions"]["download"]["expires"] > 0
+
+            assert actual["objects"][1]["oid"] == TestObjectHandler.EXISTING_KEY_2
+            assert actual["objects"][1]["size"] == 20
+            assert actual["objects"][1]["actions"]["download"]["href"] == \
+                TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_2)
+            assert actual["objects"][1]["actions"]["download"]["expires"] > 0
+
+        def test_should_give_404_for_missing_objects(self, mocker):
+            fake_a = {"oid": TestObjectHandler.MISSING_KEY_1, "size": 10}
+            fake_b = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 20}
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 200
+
+            actual = json.loads(response["body"])
+
+            assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
+            assert len(actual["objects"]) == 2
+
+            print(actual)
+
+            assert actual["objects"][0]["oid"] == TestObjectHandler.MISSING_KEY_1
+            assert actual["objects"][0]["size"] == 10
+            assert "actions" not in actual["objects"][0]
+            assert actual["objects"][0]["error"]["code"] == 404
+            assert actual["objects"][0]["error"]["message"] == f"Object {TestObjectHandler.MISSING_KEY_1} not exist."
+
+            assert actual["objects"][1]["oid"] == TestObjectHandler.EXISTING_KEY_1
+            assert actual["objects"][1]["size"] == 20
+            assert actual["objects"][1]["actions"]["download"]["href"] == \
+                TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_1)
+            assert actual["objects"][1]["actions"]["download"]["expires"] > 0
+
+        def test_should_wrap_other_download_errors(self, mocker):
+            fake_a = {"oid": "boom", "size": 10}
+            fake_b = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 20}
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+
+            self.handler.handle(given["event"], given["context"], given["callback"])
+
+            given["callback"].assert_called_once()
+            response = given["callback"].call_args.args[1]
+            assert response["statusCode"] == 200
+
+            actual = json.loads(response["body"])
+
+            assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
+            assert len(actual["objects"]) == 2
+
+            print(actual)
+
+            assert actual["objects"][0]["oid"] == "boom"
+            assert actual["objects"][0]["size"] == 10
+            assert "actions" not in actual["objects"][0]
+            assert actual["objects"][0]["error"]["code"] == 500
+            assert actual["objects"][0]["error"]["message"] == "Unhandled test exception: exist"
+
+            assert actual["objects"][1]["oid"] == TestObjectHandler.EXISTING_KEY_1
+            assert actual["objects"][1]["size"] == 20
+            assert actual["objects"][1]["actions"]["download"]["href"] == \
+                TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_1)
+            assert actual["objects"][1]["actions"]["download"]["expires"] > 0
