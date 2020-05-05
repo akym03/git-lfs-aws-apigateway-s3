@@ -34,7 +34,7 @@ class TestS3Datastore:
             if (params['Key'] == MISSING_KEY):
                 error_response = {
                     "Error": {
-                        "Code": "NotFound"
+                        "Code": 404
                     }
                 }
                 raise ClientError(error_response, "head_object")

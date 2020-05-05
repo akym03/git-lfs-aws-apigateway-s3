@@ -1,5 +1,7 @@
 from logging import getLogger
 
+import botocore
+
 from git_lfs_aws_lambda.action import Action
 from git_lfs_aws_lambda.handler import Handler
 from git_lfs_aws_lambda.lfs_error import LfsError
@@ -113,10 +115,18 @@ class ObjectHandler(Handler):
 
     def __handle_verify(self, request):
         oid = request["oid"]
-        info = self.datastore.get_info(oid)
+        result = None
+        found = None
 
-        result = "NotFound" if info is None else "Verified" if info["ContentLength"] == request["size"] else "WrongSize"
-        found = None if info is None else {"oid": request["oid"], "size": info["ContentLength"]}
+        try:
+            info = self.datastore.get_info(oid)
+            result = "Verified" if info["ContentLength"] == request["size"] else "WrongSize"
+            found = {"oid": request["oid"], "size": info["ContentLength"]}
+
+        except botocore.exceptions.ClientError as ex:
+            if ex.response["Error"]["Code"] != 404:
+                raise ex
+            result = "NotFound"
 
         return {
             "result": result,

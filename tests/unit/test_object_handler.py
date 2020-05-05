@@ -2,6 +2,8 @@ import json
 import pytest
 import re
 
+import botocore
+
 from git_lfs_aws_lambda.object_handler import ObjectHandler
 from git_lfs_aws_lambda.datastore import Datastore
 from git_lfs_aws_lambda.lfs_error import LfsError
@@ -317,7 +319,12 @@ class TestObjectHandler:
                 if (key == TestObjectHandler.EXISTING_KEY_1):
                     return {"ContentLength": TestObjectHandler.EXISTING_KEY_SIZE}
                 if (key == TestObjectHandler.MISSING_KEY_1):
-                    return None
+                    raise botocore.exceptions.ClientError({
+                        "Error": {
+                            "Code": 404,
+                            "Message": f"Mock s3: no suck key {key}"
+                        }
+                    }, "head_object")
 
                 raise Exception("Unhandled test exception: get_info")
 

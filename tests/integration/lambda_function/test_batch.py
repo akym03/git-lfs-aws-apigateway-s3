@@ -3,7 +3,7 @@ import os
 import pytest
 import re
 
-from botocore.exceptions import ClientError
+import botocore
 
 from .create_request import request_with_body
 from git_lfs_aws_lambda.lambda_function.batch import lambda_handler
@@ -27,14 +27,19 @@ class TestBatch:
                 return {}
 
             if (params['Key'] == TestBatch.MISSING_KEY):
-                raise ClientError({
+                raise botocore.exceptions.ClientError({
                     "Error": {
-                        "Code": "NotFound",
-                        "message": f"Mock s3: no suck key {params['Key']}"
+                        "Code": 404,
+                        "Message": f"Mock s3: no suck key {params['Key']}"
                     }
                 }, "head_object")
 
-            raise ClientError({"Error": {"Code": f"unkown key {params['Key']}"}}, "head_object unkown key")
+            raise botocore.exceptions.ClientError({
+                "Error": {
+                    "Code": 500,
+                    "Message": f"unkown key {params['Key']}"
+                }
+            }, "head_object unkown key")
 
         def generate_presigned_url(self, operation, params, callback=None):
             if (operation == "put_object" and params['Key'] == TestBatch.MISSING_KEY):
