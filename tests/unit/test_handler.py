@@ -4,6 +4,7 @@ import pytest
 
 from git_lfs_aws_lambda.handler import Handler
 from git_lfs_aws_lambda.lfs_error import LfsError
+from ..fake_lambda_context import FakeLambdaContext
 
 
 @pytest.fixture()
@@ -15,9 +16,7 @@ def given_event():
 
 @pytest.fixture()
 def given_context():
-    return {
-        "awsRequestId": "testRequestId"
-    }
+    return FakeLambdaContext()
 
 
 class TestHandler(object):

@@ -8,6 +8,8 @@ from git_lfs_aws_lambda.object_handler import ObjectHandler
 from git_lfs_aws_lambda.datastore import Datastore
 from git_lfs_aws_lambda.lfs_error import LfsError
 
+from ..fake_lambda_context import FakeLambdaContext
+
 
 class TestObjectHandler:
 
@@ -29,9 +31,7 @@ class TestObjectHandler:
                 },
                 "resource": "/integration/test/resource"
             },
-            "context": {
-                "awsRequestId": "testRequestId"
-            }
+            "context": FakeLambdaContext()
         }
 
     class TestUploads:

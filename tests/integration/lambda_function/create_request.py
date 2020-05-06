@@ -1,5 +1,7 @@
 import json
 
+from ...fake_lambda_context import FakeLambdaContext
+
 
 def request_with_body(body):
     return {
@@ -10,7 +12,5 @@ def request_with_body(body):
             },
             "resource": "/integration/test/resource"
         },
-        "context": {
-            "awsRequestId": "testRequestId"
-        }
+        "context": FakeLambdaContext
     }

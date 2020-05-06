@@ -14,13 +14,13 @@ class Handler:
             result = self.lambda_response(200, response)
         except LfsError as ex:
             ex_code, ex_message = ex.args
-            body = self.git_lfs_error(ex_message, self.get_doc_url(ex_code), context['awsRequestId'])
+            body = self.git_lfs_error(ex_message, self.get_doc_url(ex_code), context.aws_request_id)
             result = self.lambda_response(ex_code, body)
         except Exception as ex:
             Handler.logger.exception(ex)
             ex_message = ex.args[0]
             code = 500
-            body = self.git_lfs_error(ex_message, self.get_doc_url(code), context['awsRequestId'])
+            body = self.git_lfs_error(ex_message, self.get_doc_url(code), context.aws_request_id)
             result = self.lambda_response(code, body)
 
         return result
