@@ -8,7 +8,7 @@ class Handler:
     logger = getLogger(__name__)
 
     def handle(self, event, context):
-        request = json.loads(event['body'])
+        request = json.loads(event['body']) if event['body'] is not None else {}
         try:
             response = self.process(request)
             result = self.lambda_response(200, response)

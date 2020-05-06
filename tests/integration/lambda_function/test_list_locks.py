@@ -9,6 +9,7 @@ class TestListLocks:
 
     def test_is_not_implemented(self):
         given = request_with_body({})
+        given["event"]["body"] = None
 
         response = lambda_handler(given["event"], given["context"])
 
