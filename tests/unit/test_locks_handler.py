@@ -23,7 +23,7 @@ class TestLockHandler():
         with pytest.raises(LfsError) as ex:
             handler = LockHandler('create')
             handler.process({"test": "data"})
-        assert "(500, 'Locks: Create not implemented'" in str(ex.value)
+        assert "(501, 'Locks: Create not implemented'" in str(ex.value)
 
     def test_should_raise_on_delete(self):
         with pytest.raises(LfsError) as ex:

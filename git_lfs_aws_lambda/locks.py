@@ -12,7 +12,7 @@ class Locks:
         }
 
     def create(self, path_to_file=None):
-        raise LfsError(500, "Locks: Create not implemented")
+        raise LfsError(501, "Locks: Create not implemented")
 
     def delete(self, request=None):
         raise LfsError(501, "Locks: Delete not implemented")
