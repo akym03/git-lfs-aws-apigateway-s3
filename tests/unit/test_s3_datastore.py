@@ -25,13 +25,13 @@ class TestS3Datastore:
 
             return "FakeError"
 
-        def head_object(self, params):
-            if (params['Key'] == EXISTING_KEY):
+        def head_object(self, Bucket, Key):
+            if (Key == EXISTING_KEY):
                 return {
                     "ContentLength": 64
                 }
 
-            if (params['Key'] == MISSING_KEY):
+            if (Key == MISSING_KEY):
                 error_response = {
                     "Error": {
                         "Code": 404

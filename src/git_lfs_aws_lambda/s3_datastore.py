@@ -28,11 +28,7 @@ class S3Datastore(Datastore):
         return self.get_url(key, 'get_object')
 
     def get_info(self, key):
-        params = {
-            "Bucket": self.bucket_name,
-            "Key": key
-        }
-        return self.s3.head_object(params)
+        return self.s3.head_object(Bucket=self.bucket_name, Key=key)
 
     def exists(self, key):
         try:

@@ -22,22 +22,22 @@ class TestBatch:
         return f"{operation}:{bucket}/{key}"
 
     class S3Mock:
-        def head_object(self, params):
-            if (params['Key'] == TestBatch.EXISTING_KEY):
+        def head_object(self, Bucket, Key):
+            if (Key == TestBatch.EXISTING_KEY):
                 return {}
 
-            if (params['Key'] == TestBatch.MISSING_KEY):
+            if (Key == TestBatch.MISSING_KEY):
                 raise botocore.exceptions.ClientError({
                     "Error": {
                         "Code": 404,
-                        "Message": f"Mock s3: no suck key {params['Key']}"
+                        "Message": f"Mock s3: no suck key {Key}"
                     }
                 }, "head_object")
 
             raise botocore.exceptions.ClientError({
                 "Error": {
                     "Code": 500,
-                    "Message": f"unkown key {params['Key']}"
+                    "Message": f"unkown key {Key}"
                 }
             }, "head_object unkown key")
 
