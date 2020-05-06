@@ -20,9 +20,7 @@ class TestObjectHandler:
     TRANSFER_TYPE = "basic"
     VERIFY_URL_REGEX = re.compile(f"^https?://{INTEGRATION_ENDPOINT}/.*/verify$")
 
-    def request_with_body(body, mocker):
-
-        callback = mocker.Mock(return_value=None)
+    def request_with_body(body):
         return {
             "event": {
                 "body": json.dumps(body),
@@ -33,8 +31,7 @@ class TestObjectHandler:
             },
             "context": {
                 "awsRequestId": "testRequestId"
-            },
-            "callback": callback
+            }
         }
 
     class TestUploads:
@@ -73,12 +70,9 @@ class TestObjectHandler:
                 TestObjectHandler.INTEGRATION_ENDPOINT,
                 "/test/resource/path")
 
-        def test_should_refuse_unkown_transfer_type(self, mocker):
-            given = TestObjectHandler.request_with_body({"transfers": ["somethingWeird"]}, mocker)
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+        def test_should_refuse_unkown_transfer_type(self):
+            given = TestObjectHandler.request_with_body({"transfers": ["somethingWeird"]})
+            response = self.handler.handle(given["event"], given["context"])
 
             assert response["statusCode"] == 422
 
@@ -86,23 +80,18 @@ class TestObjectHandler:
             assert actual["message"] == "Unsupported transfer type: ['somethingWeird']"
             assert re.match("^http", actual["documentation_url"]) is not None
 
-        def test_should_process_valid_upload_request(self, mocker):
+        def test_should_process_valid_upload_request(self):
             fake_a = {"oid": TestObjectHandler.MISSING_KEY_1, "size": 10}
             fake_b = {"oid": TestObjectHandler.MISSING_KEY_2, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
-
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
             assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
             assert len(actual["objects"]) == 2
 
-            print(actual["objects"][0])
             assert actual["objects"][0]["oid"] == TestObjectHandler.MISSING_KEY_1
             assert actual["objects"][0]["size"] == 10
             assert actual["objects"][0]["actions"]["upload"]["href"] == \
@@ -119,15 +108,12 @@ class TestObjectHandler:
             assert TestObjectHandler.VERIFY_URL_REGEX.match(actual["objects"][1]["actions"]["verify"]["href"]) \
                 is not None
 
-        def test_should_skip_uploads_for_existsng_object(self, mocker):
+        def test_should_skip_uploads_for_existsng_object(self):
             fake_a = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": TestObjectHandler.EXISTING_KEY_SIZE}
             fake_b = {"oid": TestObjectHandler.MISSING_KEY_2, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
@@ -147,15 +133,12 @@ class TestObjectHandler:
             assert TestObjectHandler.VERIFY_URL_REGEX.match(actual["objects"][1]["actions"]["verify"]["href"]) \
                 is not None
 
-        def test_should_wrap_individual_object_errors(self, mocker):
+        def test_should_wrap_individual_object_errors(self):
             fake_a = {"oid": "boom", "size": 1}
             fake_b = {"oid": TestObjectHandler.MISSING_KEY_2, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
@@ -217,15 +200,12 @@ class TestObjectHandler:
                 TestObjectHandler.INTEGRATION_ENDPOINT,
                 "/test/resource/path")
 
-        def test_should_process_valid_download_request(self, mocker):
+        def test_should_process_valid_download_request(self):
             fake_a = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 10}
             fake_b = {"oid": TestObjectHandler.EXISTING_KEY_2, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
@@ -245,23 +225,18 @@ class TestObjectHandler:
                 TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_2)
             assert actual["objects"][1]["actions"]["download"]["expires"] > 0
 
-        def test_should_give_404_for_missing_objects(self, mocker):
+        def test_should_give_404_for_missing_objects(self):
             fake_a = {"oid": TestObjectHandler.MISSING_KEY_1, "size": 10}
             fake_b = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
+            response = self.handler.handle(given["event"], given["context"])
 
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
             assert response["statusCode"] == 200
-
             actual = json.loads(response["body"])
 
             assert actual["transfer"] == TestObjectHandler.TRANSFER_TYPE
             assert len(actual["objects"]) == 2
-
-            print(actual)
 
             assert actual["objects"][0]["oid"] == TestObjectHandler.MISSING_KEY_1
             assert actual["objects"][0]["size"] == 10
@@ -275,15 +250,12 @@ class TestObjectHandler:
                 TestObjectHandler.TestDownloads.__download_url_for(TestObjectHandler.EXISTING_KEY_1)
             assert actual["objects"][1]["actions"]["download"]["expires"] > 0
 
-        def test_should_wrap_other_download_errors(self, mocker):
+        def test_should_wrap_other_download_errors(self):
             fake_a = {"oid": "boom", "size": 10}
             fake_b = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 20}
-            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]}, mocker)
+            given = TestObjectHandler.request_with_body({"objects": [fake_a, fake_b]})
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
@@ -337,56 +309,44 @@ class TestObjectHandler:
                 TestObjectHandler.INTEGRATION_ENDPOINT,
                 "/test/resource/path")
 
-        def test_should_verify_correct_object(self, mocker):
+        def test_should_verify_correct_object(self):
             body = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": TestObjectHandler.EXISTING_KEY_SIZE}
-            given = TestObjectHandler.request_with_body(body, mocker)
+            given = TestObjectHandler.request_with_body(body)
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 200
 
             actual = json.loads(response["body"])
 
             assert actual == body
 
-        def test_should_verify_incorrect_object(self, mocker):
+        def test_should_verify_incorrect_object(self):
             body = {"oid": TestObjectHandler.EXISTING_KEY_1, "size": 12}
-            given = TestObjectHandler.request_with_body(body, mocker)
+            given = TestObjectHandler.request_with_body(body)
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 411
 
             actual = json.loads(response["body"])
 
             assert actual["message"] == f"Expected object of size 12 but found {TestObjectHandler.EXISTING_KEY_SIZE}"
 
-        def test_should_verify_missing_object(self, mocker):
+        def test_should_verify_missing_object(self):
             body = {"oid": TestObjectHandler.MISSING_KEY_1, "size": TestObjectHandler.EXISTING_KEY_SIZE}
-            given = TestObjectHandler.request_with_body(body, mocker)
+            given = TestObjectHandler.request_with_body(body)
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 404
 
             actual = json.loads(response["body"])
 
             assert actual["message"] == f"Object {TestObjectHandler.MISSING_KEY_1} not found."
 
-        def test_should_wrap_other_errors(self, mocker):
+        def test_should_wrap_other_errors(self):
             body = {"oid": "boom", "size": TestObjectHandler.EXISTING_KEY_SIZE}
-            given = TestObjectHandler.request_with_body(body, mocker)
+            given = TestObjectHandler.request_with_body(body)
 
-            self.handler.handle(given["event"], given["context"], given["callback"])
-
-            given["callback"].assert_called_once()
-            response = given["callback"].call_args.args[1]
+            response = self.handler.handle(given["event"], given["context"])
             assert response["statusCode"] == 500
 
             actual = json.loads(response["body"])
@@ -395,7 +355,7 @@ class TestObjectHandler:
 
     class TestOperation:
 
-        def test_should_given_unknows_operation(self, mocker):
+        def test_should_given_unknows_operation(self):
 
             try:
                 ObjectHandler(

@@ -41,7 +41,7 @@ class TestBatch:
                 }
             }, "head_object unkown key")
 
-        def generate_presigned_url(self, operation, params, callback=None):
+        def generate_presigned_url(self, operation, params):
             if (operation == "put_object" and params['Key'] == TestBatch.MISSING_KEY):
                 return TestBatch.make_url(operation, params['Bucket'], params['Key'])
 
@@ -65,7 +65,6 @@ class TestBatch:
         os.environ["ENDPOINT"] = TestBatch.INTEGRATION_ENDPOINT
 
         mocker.patch('boto3.client').return_value = TestBatch.S3Mock()
-        self.callback = mocker.Mock(return_value=None)
 
     def test_will_provide_upload_url_for_new_objects_and_skip_exists(self):
         given = request_with_body({
@@ -75,13 +74,10 @@ class TestBatch:
                 {"oid": TestBatch.EXISTING_KEY, "size": 25}
             ]
         })
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 200
 
-        self.callback.assert_called_once()
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 200
-
-        actual = json.loads(self.callback.call_args[0][1]["body"])
+        actual = json.loads(response["body"])
 
         assert len(actual["objects"]) == 2
         assert actual["objects"][0]["actions"]["upload"]["href"] == \
@@ -99,13 +95,10 @@ class TestBatch:
             ]
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 200
 
-        self.callback.assert_called_once()
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 200
-
-        actual = json.loads(self.callback.call_args[0][1]["body"])
+        actual = json.loads(response["body"])
 
         assert len(actual["objects"]) == 2
         assert "actions" not in actual["objects"][0]
@@ -123,15 +116,11 @@ class TestBatch:
             ]
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 200
 
-        self.callback.assert_called_once()
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 200
+        actual = json.loads(response["body"])
 
-        actual = json.loads(self.callback.call_args[0][1]["body"])
-
-        print(actual["objects"][1])
         assert len(actual["objects"]) == 2
         assert actual["objects"][0]["actions"]["download"]["href"] == \
             TestBatch.make_url("get_object", TestBatch.INTEGRATION_BUCKET, TestBatch.EXISTING_KEY)

@@ -1,6 +1,5 @@
 import json
 import re
-import pytest
 
 from git_lfs_aws_lambda.lambda_function.list_locks import lambda_handler
 from .create_request import request_with_body
@@ -8,22 +7,14 @@ from .create_request import request_with_body
 
 class TestListLocks:
 
-    @pytest.fixture(scope="function", autouse=True)
-    def setup(self, mocker):
-        self.callback = mocker.Mock(return_value=None)
-
     def test_is_not_implemented(self):
         given = request_with_body({})
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
 
-        self.callback.assert_called_once()
+        assert response["statusCode"] == 501
 
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 501
-
-        actual = json.loads(self.callback.call_args[0][1]["body"])
-        print(self.callback.call_args[0][1])
+        actual = json.loads(response["body"])
         assert re.search('not implemented', actual["message"]) is not None
         assert actual["request_id"] == "testRequestId"
         assert actual["documentation_url"] is not None

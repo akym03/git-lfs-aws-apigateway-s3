@@ -7,7 +7,7 @@ from git_lfs_aws_lambda.lfs_error import LfsError
 class Handler:
     logger = getLogger(__name__)
 
-    def handle(self, event, context, callback):
+    def handle(self, event, context):
         request = json.loads(event['body'])
         try:
             response = self.process(request)
@@ -23,7 +23,7 @@ class Handler:
             body = self.git_lfs_error(ex_message, self.get_doc_url(code), context['awsRequestId'])
             result = self.lambda_response(code, body)
 
-        callback(None, result)
+        return result
 
     def git_lfs_error(self, message, doc_url, request_id):
         return {

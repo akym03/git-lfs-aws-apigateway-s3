@@ -52,7 +52,6 @@ class TestVerifyObject:
         os.environ["ARTIFACTS_BUCKET"] = TestVerifyObject.INTEGRATION_BUCKET
 
         mocker.patch('boto3.client').return_value = TestVerifyObject.S3Mock()
-        self.callback = mocker.Mock(return_value=None)
 
     def test_will_verify_exsisting_objects(self):
         given = request_with_body({
@@ -60,25 +59,18 @@ class TestVerifyObject:
             "size": TestVerifyObject.EXISTING_KEY_SIZE
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
-
-        self.callback.assert_called_once()
-
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 200
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 200
 
     def test_will_not_verify_missing_objects(self):
         given = request_with_body({
             "oid": TestVerifyObject.MISSING_KEY, "size": 1
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 404
 
-        self.callback.assert_called_once()
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 404
-
-        actual = json.loads(self.callback.call_args[0][1]["body"])
+        actual = json.loads(response["body"])
         assert "message" in actual
         assert "documentation_url" in actual
         assert actual["request_id"] == "testRequestId"
@@ -89,14 +81,10 @@ class TestVerifyObject:
             "size": 12
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
+        assert response["statusCode"] == 411
 
-        self.callback.assert_called_once()
-
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 411
-
-        actual = json.loads(self.callback.call_args[0][1]["body"])
+        actual = json.loads(response["body"])
         assert "message" in actual
         assert "documentation_url" in actual
         assert actual["request_id"] == "testRequestId"
@@ -107,13 +95,11 @@ class TestVerifyObject:
             "size": 12
         })
 
-        lambda_handler(given["event"], given["context"], self.callback)
+        response = lambda_handler(given["event"], given["context"])
 
-        self.callback.assert_called_once()
-        assert self.callback.call_args[0][0] is None
-        assert self.callback.call_args[0][1]["statusCode"] == 500
+        assert response["statusCode"] == 500
 
-        actual = json.loads(self.callback.call_args[0][1]["body"])
+        actual = json.loads(response["body"])
         assert "message" in actual
         assert "documentation_url" in actual
         assert actual["request_id"] == "testRequestId"
