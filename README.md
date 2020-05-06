@@ -1,6 +1,7 @@
 # git-lfs-aws-apigateway-s3
 
 ![CI](https://github.com/maakiyama/git-lfs-aws-apigateway-s3/workflows/CI/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/maakiyama/git-lfs-aws-apigateway-s3/badge.svg?branch=develop)](https://coveralls.io/github/maakiyama/git-lfs-aws-apigateway-s3?branch=develop)
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
 

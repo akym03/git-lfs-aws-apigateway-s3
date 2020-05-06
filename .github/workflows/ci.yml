@@ -24,14 +24,11 @@ jobs:
         pip install pipenv --upgrade-strategy=only-if-needed
         pipenv sync --dev
     - name: Run test
+      env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       run: |
-        pipenv run pytest --cov=git_lfs_aws_lambda --cov-report=html
+        pipenv run coverage run --source=src -m pytest tests
+        pipenv run coveralls
     - name: Run Lint with flake8
       run: |
         pipenv run flake8 --ignore=E501 git_lfs_aws_lambda tests
-    - name: Archive code coverage results
-      if: always()
-      uses: actions/upload-artifact@v1
-      with:
-        name: code-coverage-report
-        path: htmlcov
