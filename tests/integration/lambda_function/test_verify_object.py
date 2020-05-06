@@ -38,15 +38,6 @@ class TestVerifyObject:
                 }
             }, "head_object unkown key")
 
-        def get_signed_url(self, operation, params, callback=None):
-            if (operation == "put_object" and params['Key'] == TestVerifyObject.MISSING_KEY):
-                return callback(None, TestVerifyObject.make_url(operation, params['Bucket'], params['Key']))
-
-            if (operation == "get_object" and params['Key'] == TestVerifyObject.EXISTING_KEY):
-                return callback(None, TestVerifyObject.make_url(operation, params['Bucket'], params['Key']))
-
-            return callback("FakeError")
-
     @pytest.fixture(scope='function', autouse=True)
     def setup(self, mocker):
         os.environ["ARTIFACTS_BUCKET"] = TestVerifyObject.INTEGRATION_BUCKET

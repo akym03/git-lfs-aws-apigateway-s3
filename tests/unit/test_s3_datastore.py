@@ -16,7 +16,7 @@ class TestS3Datastore:
         return f"{operation}:{bucket}/{key}"
 
     class S3Mock:
-        def generate_presigned_url(self, operation, params, callback=None):
+        def generate_presigned_url(self, operation, params):
             if (operation == "put_object" and params['Key'] == MISSING_KEY):
                 return TestS3Datastore.make_url(operation, params['Bucket'], params['Key'])
 

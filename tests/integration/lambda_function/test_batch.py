@@ -50,15 +50,6 @@ class TestBatch:
 
             return "FakeError"
 
-        def get_signed_url(self, operation, params, callback=None):
-            if (operation == "put_object" and params['Key'] == TestBatch.MISSING_KEY):
-                return callback(None, TestBatch.make_url(operation, params['Bucket'], params['Key']))
-
-            if (operation == "get_object" and params['Key'] == TestBatch.EXISTING_KEY):
-                return callback(None, TestBatch.make_url(operation, params['Bucket'], params['Key']))
-
-            return callback("FakeError")
-
     @pytest.fixture(scope='function', autouse=True)
     def setup(self, mocker):
         os.environ["ARTIFACTS_BUCKET"] = TestBatch.INTEGRATION_BUCKET
