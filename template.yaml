@@ -6,34 +6,135 @@ Description: >
   Sample SAM Template for git-lfs-aws-apigateway-s3
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 3
+Parameters:
+  artifactsBucketName:
+    Type: String
+    Default: "akym03-git-lfs-test"
+  endpoint:
+    Type: String
+    Default: "http://foo.bar.example.com"
+  repoName:
+    Type: String
+    Default: "lfs-test-repo"
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  artifactsBucket:
+    Type: 'AWS::S3::Bucket'
     Properties:
+      AccessControl: Private
+      BucketName: !Ref artifactsBucketName
+  batchFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-batch
       CodeUri: git_lfs_aws_lambda/
-      Handler: app.lambda_handler
+      Handler: lambda_function.batch.lambda_handler
       Runtime: python3.8
+      Timeout: 60
+      Environment:
+        Variables:
+          ARTIFACTS_BUCKET: !Ref artifactsBucket
+          ENDPOINT: !Ref endpoint
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref artifactsBucketName
       Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        api:
+          Type: Api 
           Properties:
-            Path: /hello
-            Method: get
+            Path: "/repoName.git/info/lfs/objects/batch"
+            Method: POST
 
-Outputs:
+  verifyObjectFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-verifyObject
+      CodeUri: git_lfs_aws_lambda/
+      Handler: lambda_function.verify_object.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Environment:
+        Variables:
+          ARTIFACTS_BUCKET: !Ref artifactsBucket
+          ENDPOINT: !Ref endpoint
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref artifactsBucketName
+      Events:
+        api:
+          Type: Api 
+          Properties:
+            Path: "/repoName.git/info/lfs/objects/batch/verify"
+            Method: POST
+
+  verifyLocksFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-verifyLocks
+      CodeUri: git_lfs_aws_lambda/
+      Handler: lambda_function.verify_locks.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Events:
+        api:
+          Type: Api 
+          Properties:
+            Path: "/repoName.git/info/lfs/locks/veirfy"
+            Method: POST
+
+  listLocksFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-lsitLocks
+      CodeUri: git_lfs_aws_lambda/
+      Handler: lambda_function.list_locks.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Events:
+        api:
+          Type: Api 
+          Properties:
+            Path: "/repoName.git/info/lfs/locks"
+            Method: GET
+
+  createLocksFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-createLocks
+      CodeUri: git_lfs_aws_lambda/
+      Handler: lambda_function.create_locks.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Events:
+        api:
+          Type: Api 
+          Properties:
+            Path: "/repoName.git/info/lfs/locks"
+            Method: POST
+  deleteLocksFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      FunctionName: git-lfs-deleteLocks
+      CodeUri: git_lfs_aws_lambda/
+      Handler: lambda_function.delete_locks.lambda_handler
+      Runtime: python3.8
+      Timeout: 60
+      Events:
+        api:
+          Type: Api 
+          Properties:
+            Path: "/repoName.git/info/lfs/locks/{id}/unlock"
+            Method: POST
+# Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  # HelloWorldApi:
+  #   Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+  #   Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  # HelloWorldFunction:
+  #   Description: "Hello World Lambda Function ARN"
+  #   Value: !GetAtt HelloWorldFunction.Arn
+  # HelloWorldFunctionIamRole:
+  #   Description: "Implicit IAM Role created for Hello World function"
+  #   Value: !GetAtt HelloWorldFunctionRole.Arn
