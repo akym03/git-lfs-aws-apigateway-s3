@@ -15,4 +15,4 @@ class Locks:
         raise LfsError(500, "Locks: Create not implemented")
 
     def delete(self, request=None):
-        raise LfsError(500, "Locks: Delete not implemented")
+        raise LfsError(501, "Locks: Delete not implemented")

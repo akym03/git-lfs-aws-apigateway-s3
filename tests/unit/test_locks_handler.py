@@ -29,7 +29,7 @@ class TestLockHandler():
         with pytest.raises(LfsError) as ex:
             handler = LockHandler('delete')
             handler.process({"test": "data"})
-        assert "(500, 'Locks: Delete not implemented'" in str(ex.value)
+        assert "(501, 'Locks: Delete not implemented'" in str(ex.value)
 
     def test_shoud_provide_err_doc(self):
         handler = LockHandler('verify')
