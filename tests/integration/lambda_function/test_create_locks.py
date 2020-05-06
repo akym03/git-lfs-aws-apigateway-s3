@@ -1,14 +1,15 @@
 import json
 import re
 
-from git_lfs_aws_lambda.lambda_function.create_locks import lambda_handler
+from git_lfs_aws_lambda.lambda_function.handler import lambda_handler
 from .create_request import request_with_body
 
 
 class TestCreateLocks:
+    API_RESOURCE = '/{repoName}/info/lfs/locks'
 
     def test_is_not_implemented(self):
-        given = request_with_body({})
+        given = request_with_body(resource=TestCreateLocks.API_RESOURCE, body={})
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 501

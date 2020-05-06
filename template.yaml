@@ -23,12 +23,12 @@ Resources:
     Properties:
       AccessControl: Private
       BucketName: !Ref artifactsBucketName
-  batchFunction:
+  LmabdaFunction:
     Type: AWS::Serverless::Function 
     Properties:
-      FunctionName: git-lfs-batch
+      FunctionName: !Sub "git-lfs-${repoName}"
       CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.batch.lambda_handler
+      Handler: git_lfs_aws_lambda.lambda_function.handler.lambda_handler
       Runtime: python3.8
       Timeout: 60
       Environment:
@@ -39,99 +39,40 @@ Resources:
         - S3CrudPolicy:
             BucketName: !Ref artifactsBucketName
       Events:
-        api:
+        batch:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/objects/batch"
+            Path: "/{repoName}/info/lfs/objects/batch"
             Method: POST
-
-  verifyObjectFunction:
-    Type: AWS::Serverless::Function 
-    Properties:
-      FunctionName: git-lfs-verifyObject
-      CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.verify_object.lambda_handler
-      Runtime: python3.8
-      Timeout: 60
-      Environment:
-        Variables:
-          ARTIFACTS_BUCKET: !Ref artifactsBucket
-          ENDPOINT: !Ref endpoint
-      Policies:
-        - S3CrudPolicy:
-            BucketName: !Ref artifactsBucketName
-      Events:
-        api:
+        verifyObject:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/objects/batch/verify"
+            Path: "/{repoName}/info/lfs/objects/batch/verify"
             Method: POST
-
-  verifyLocksFunction:
-    Type: AWS::Serverless::Function 
-    Properties:
-      FunctionName: git-lfs-verifyLocks
-      CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.verify_locks.lambda_handler
-      Runtime: python3.8
-      Timeout: 60
-      Events:
-        api:
+        verifyLocks:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/locks/veirfy"
+            Path: "/{repoName}/info/lfs/locks/veirfy"
             Method: POST
-
-  listLocksFunction:
-    Type: AWS::Serverless::Function 
-    Properties:
-      FunctionName: git-lfs-lsitLocks
-      CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.list_locks.lambda_handler
-      Runtime: python3.8
-      Timeout: 60
-      Events:
-        api:
+        listLocks:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/locks"
+            Path: "/{repoName}/info/lfs/locks"
             Method: GET
-
-  createLocksFunction:
-    Type: AWS::Serverless::Function 
-    Properties:
-      FunctionName: git-lfs-createLocks
-      CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.create_locks.lambda_handler
-      Runtime: python3.8
-      Timeout: 60
-      Events:
-        api:
+        createLocks:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/locks"
+            Path: "/{repoName}/info/lfs/locks"
             Method: POST
-  deleteLocksFunction:
-    Type: AWS::Serverless::Function 
-    Properties:
-      FunctionName: git-lfs-deleteLocks
-      CodeUri: src/
-      Handler: git_lfs_aws_lambda.lambda_function.delete_locks.lambda_handler
-      Runtime: python3.8
-      Timeout: 60
-      Events:
-        api:
+        deleteLocks:
           Type: Api 
           Properties:
-            Path: "/repoName.git/info/lfs/locks/{id}/unlock"
+            Path: "/{repoName}/info/lfs/locks/{id}/unlock"
             Method: POST
-# Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  # HelloWorldApi:
+Outputs:
+  GitLfsFunction:
   #   Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-  #   Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/"
   # HelloWorldFunction:
   #   Description: "Hello World Lambda Function ARN"
   #   Value: !GetAtt HelloWorldFunction.Arn

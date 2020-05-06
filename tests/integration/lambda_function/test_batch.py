@@ -6,10 +6,12 @@ import re
 import botocore
 
 from .create_request import request_with_body
-from git_lfs_aws_lambda.lambda_function.batch import lambda_handler
+from git_lfs_aws_lambda.lambda_function.handler import lambda_handler
 
 
 class TestBatch:
+
+    API_RESOURCE = '/{repoName}/info/lfs/objects/batch'
 
     MISSING_KEY = "missingKey"
     EXISTING_KEY = "existingKey"
@@ -58,7 +60,7 @@ class TestBatch:
         mocker.patch('boto3.client').return_value = TestBatch.S3Mock()
 
     def test_will_provide_upload_url_for_new_objects_and_skip_exists(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestBatch.API_RESOURCE, body={
             "operation": "upload",
             "objects": [
                 {"oid": TestBatch.MISSING_KEY, "size": 25},
@@ -78,7 +80,7 @@ class TestBatch:
         assert "actions" not in actual["objects"][1]
 
     def test_will_provide_download_url_for_existing_objects_and_error_for_missing(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestBatch.API_RESOURCE, body={
             "operation": "download",
             "objects": [
                 {"oid": TestBatch.MISSING_KEY, "size": 25},
@@ -99,7 +101,7 @@ class TestBatch:
             TestBatch.make_url("get_object", TestBatch.INTEGRATION_BUCKET, TestBatch.EXISTING_KEY)
 
     def test_will_wrap_individual_file_errors(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestBatch.API_RESOURCE, body={
             "operation": "download",
             "objects": [
                 {"oid": TestBatch.EXISTING_KEY, "size": 25},

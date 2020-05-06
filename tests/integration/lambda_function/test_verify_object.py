@@ -5,10 +5,12 @@ import pytest
 import botocore
 
 from .create_request import request_with_body
-from git_lfs_aws_lambda.lambda_function.verify_object import lambda_handler
+from git_lfs_aws_lambda.lambda_function.handler import lambda_handler
 
 
 class TestVerifyObject:
+    API_RESOURCE = '/{repoName}/info/lfs/objects/batch/verify'
+
     MISSING_KEY = "missingKey"
     EXISTING_KEY = "existingKey"
     EXISTING_KEY_SIZE = 128
@@ -45,7 +47,7 @@ class TestVerifyObject:
         mocker.patch('boto3.client').return_value = TestVerifyObject.S3Mock()
 
     def test_will_verify_exsisting_objects(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
             "oid": TestVerifyObject.EXISTING_KEY,
             "size": TestVerifyObject.EXISTING_KEY_SIZE
         })
@@ -54,7 +56,7 @@ class TestVerifyObject:
         assert response["statusCode"] == 200
 
     def test_will_not_verify_missing_objects(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
             "oid": TestVerifyObject.MISSING_KEY, "size": 1
         })
 
@@ -67,7 +69,7 @@ class TestVerifyObject:
         assert actual["request_id"] == "testRequestId"
 
     def test_will_not_verify_with_mismatched_sizeds(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
             "oid": TestVerifyObject.EXISTING_KEY,
             "size": 12
         })
@@ -81,7 +83,7 @@ class TestVerifyObject:
         assert actual["request_id"] == "testRequestId"
 
     def test_will_fail_gracefully(self):
-        given = request_with_body({
+        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
             "oid": "splode",
             "size": 12
         })
