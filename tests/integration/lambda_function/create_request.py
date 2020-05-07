@@ -10,7 +10,8 @@ def request_with_body(http_method='POST', resource=None, body={}):
             "resource": resource,
             "body": json.dumps(body),
             "requestContext": {
-                "stage": "integrationTest"
+                "stage": "integrationTest",
+                "domainName": "gllApiIntegrationTestEndpoint"
             },
         },
         "context": FakeLambdaContext

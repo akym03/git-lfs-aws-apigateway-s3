@@ -21,6 +21,18 @@ def lambda_handler(event, context):
     }
 
     try:
+        if ('resource' not in event):
+            return {
+                "statusCode": 400,
+                "message": "not found resource in event"
+            }
+
+        if ('domainName' not in event['requestContext']):
+            return {
+                "statusCode": 400,
+                "message": "not found domainName in requestContext"
+            }
+
         resource = event['resource']
         if (event['httpMethod'] == 'POST'):
             handler = method_post[resource](event, context)
@@ -29,29 +41,31 @@ def lambda_handler(event, context):
         else:
             return {
                 "statusCode": 405,
-                "message": "not found"
+                "message": f"unsupport http method is {event['httpMethod']}"
             }
 
         return handler.handle(event, context)
     except KeyError:
         return {
             "statusCode": 404,
-            "message": "not found"
+            "message": "resource not found"
         }
 
 
 def batch_hander(event, context):
     resource = event["resource"]
+    endpoint = f'https://{event["requestContext"]["domainName"]}'
     datastore = S3Datastore(os.environ["ARTIFACTS_BUCKET"])
     op = json.loads(event["body"])["operation"]
 
-    return ObjectHandler(op, datastore, os.environ["ENDPOINT"], resource)
+    return ObjectHandler(op, datastore, endpoint, resource)
 
 
 def verify_object_handler(event, context):
     resource = event["resource"]
+    endpoint = f'https://{event["requestContext"]["domainName"]}'
     datastore = S3Datastore(os.environ["ARTIFACTS_BUCKET"])
-    return ObjectHandler("verify", datastore, os.environ["ENDPOINT"], resource)
+    return ObjectHandler("verify", datastore, endpoint, resource)
 
 
 def verify_lock_handler(event, context):

@@ -31,7 +31,7 @@ class ObjectHandler(Handler):
     def __get_verify_url(self):
         endpoint = self.endpoint
         resource = self.resource_path
-        return f"http://{endpoint}{resource}/verify"
+        return f"{endpoint}{resource}/verify"
 
     def __verify_transfer_type(self, request):
         if ("transfers" in request and (ObjectHandler.TRANSFER_TYPE not in request["transfers"])):

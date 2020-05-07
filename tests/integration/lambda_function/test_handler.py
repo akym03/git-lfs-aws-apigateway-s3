@@ -20,3 +20,23 @@ class TestHandler:
 
         actual = lambda_handler(given["event"], given["context"])
         assert actual["statusCode"] == expected
+
+    def test_will_resource_not_exist_on_event(self):
+        given = request_with_body('PUT', '/{repoName}/info/lfs/objects/batch')
+        del given['event']['resource']
+
+        actual = lambda_handler(given["event"], given["context"])
+        assert actual == {
+            "statusCode": 400,
+            "message": "not found resource in event"
+        }
+
+    def test_will_domain_not_exist_on_requestContext(self):
+        given = request_with_body('PUT', '/{repoName}/info/lfs/objects/batch')
+        del given['event']['requestContext']['domainName']
+
+        actual = lambda_handler(given["event"], given["context"])
+        assert actual == {
+            "statusCode": 400,
+            "message": "not found domainName in requestContext"
+        }

@@ -55,7 +55,6 @@ class TestBatch:
     @pytest.fixture(scope='function', autouse=True)
     def setup(self, mocker):
         os.environ["ARTIFACTS_BUCKET"] = TestBatch.INTEGRATION_BUCKET
-        os.environ["ENDPOINT"] = TestBatch.INTEGRATION_ENDPOINT
 
         mocker.patch('boto3.client').return_value = TestBatch.S3Mock()
 

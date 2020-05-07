@@ -10,9 +10,6 @@ Parameters:
   artifactsBucketName:
     Type: String
     Default: "akym03-git-lfs-test"
-  endpoint:
-    Type: String
-    Default: "http://foo.bar.example.com"
   repoName:
     Type: String
     Default: "lfs-test-repo"
@@ -34,7 +31,6 @@ Resources:
       Environment:
         Variables:
           ARTIFACTS_BUCKET: !Ref artifactsBucket
-          ENDPOINT: !Ref endpoint
       Policies:
         - S3CrudPolicy:
             BucketName: !Ref artifactsBucketName

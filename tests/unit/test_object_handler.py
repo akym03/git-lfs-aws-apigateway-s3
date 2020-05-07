@@ -13,21 +13,22 @@ from ..fake_lambda_context import FakeLambdaContext
 
 class TestObjectHandler:
 
-    INTEGRATION_ENDPOINT = "gllApiIntegrationTestEndpoint"
+    UNITTEST_ENDPOINT = "unitTestEndpoint"
     MISSING_KEY_1 = "missingKey1"
     MISSING_KEY_2 = "missingKey2"
     EXISTING_KEY_1 = "existingKey1"
     EXISTING_KEY_2 = "existingKey2"
     EXISTING_KEY_SIZE = 64
     TRANSFER_TYPE = "basic"
-    VERIFY_URL_REGEX = re.compile(f"^https?://{INTEGRATION_ENDPOINT}/.*/verify$")
+    VERIFY_URL_REGEX = re.compile(f"^https?://{UNITTEST_ENDPOINT}/.*/verify$")
 
     def request_with_body(body):
         return {
             "event": {
                 "body": json.dumps(body),
                 "requestContext": {
-                    "stage": "integrationTest"
+                    "stage": "unitTest",
+                    "domainName": TestObjectHandler.UNITTEST_ENDPOINT
                 },
                 "resource": "/integration/test/resource"
             },
@@ -67,7 +68,7 @@ class TestObjectHandler:
             self.handler = ObjectHandler(
                 "upload",
                 Datastore(),
-                TestObjectHandler.INTEGRATION_ENDPOINT,
+                f"https://{TestObjectHandler.UNITTEST_ENDPOINT}",
                 "/test/resource/path")
 
         def test_should_refuse_unkown_transfer_type(self):
@@ -197,7 +198,7 @@ class TestObjectHandler:
             self.handler = ObjectHandler(
                 "download",
                 Datastore(),
-                TestObjectHandler.INTEGRATION_ENDPOINT,
+                f"https://{TestObjectHandler.UNITTEST_ENDPOINT}",
                 "/test/resource/path")
 
         def test_should_process_valid_download_request(self):
@@ -306,7 +307,7 @@ class TestObjectHandler:
             self.handler = ObjectHandler(
                 "verify",
                 Datastore(),
-                TestObjectHandler.INTEGRATION_ENDPOINT,
+                f"https://{TestObjectHandler.UNITTEST_ENDPOINT}",
                 "/test/resource/path")
 
         def test_should_verify_correct_object(self):
@@ -361,7 +362,7 @@ class TestObjectHandler:
                 ObjectHandler(
                     "boom",
                     Datastore(),
-                    TestObjectHandler.INTEGRATION_ENDPOINT,
+                    f"https://{TestObjectHandler.UNITTEST_ENDPOINT}",
                     "/test/resource/path")
             except LfsError as actual:
                 assert actual.args[0] == 401
