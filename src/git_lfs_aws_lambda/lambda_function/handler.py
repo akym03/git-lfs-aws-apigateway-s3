@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from git_lfs_aws_lambda.object_handler import ObjectHandler
@@ -9,6 +10,14 @@ from git_lfs_aws_lambda.s3_datastore import S3Datastore
 
 
 def lambda_handler(event, context):
+    logger = logging.getLogger(__name__)
+
+    level_name = os.environ.get('LOG_LEVEL')
+    level = logging.getLevelName(level_name)
+    if not isinstance(level, int):
+        level = logging.INFO
+    logger.setLevel(level)
+
     method_post = {
         '/{repoName}/info/lfs/objects/batch': batch_hander,
         '/{repoName}/info/lfs/objects/batch/verify': verify_object_handler,
@@ -20,36 +29,46 @@ def lambda_handler(event, context):
         '/{repoName}/info/lfs/locks': list_locks_handler,
     }
 
+    response = {}
+
     try:
         if ('resource' not in event):
-            return {
+            response = {
                 "statusCode": 400,
                 "message": "not found resource in event"
             }
-
-        if ('domainName' not in event['requestContext']):
-            return {
+        elif ('domainName' not in event['requestContext']):
+            response = {
                 "statusCode": 400,
                 "message": "not found domainName in requestContext"
             }
-
-        resource = event['resource']
-        if (event['httpMethod'] == 'POST'):
-            handler = method_post[resource](event, context)
-        elif (event['httpMethod'] == 'GET'):
-            handler = method_get[resource](event, context)
         else:
-            return {
-                "statusCode": 405,
-                "message": f"unsupport http method is {event['httpMethod']}"
-            }
+            resource = event['resource']
+            if (event['httpMethod'] == 'POST'):
+                handler = method_post[resource](event, context)
+            elif (event['httpMethod'] == 'GET'):
+                handler = method_get[resource](event, context)
+            else:
+                response = {
+                    "statusCode": 405,
+                    "message": f"unsupport http method is {event['httpMethod']}"
+                }
 
-        return handler.handle(event, context)
+            response = handler.handle(event, context)
     except KeyError:
-        return {
+        response = {
             "statusCode": 404,
             "message": "resource not found"
         }
+    finally:
+        logger.info(json.dumps({
+            "request": {
+                "event": event
+            },
+            "response": response
+        }))
+
+        return response
 
 
 def batch_hander(event, context):
