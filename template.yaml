@@ -48,7 +48,7 @@ Resources:
         verifyLocks:
           Type: Api 
           Properties:
-            Path: "/{repoName}/info/lfs/locks/veirfy"
+            Path: "/{repoName}/info/lfs/locks/verify"
             Method: POST
         listLocks:
           Type: Api 
