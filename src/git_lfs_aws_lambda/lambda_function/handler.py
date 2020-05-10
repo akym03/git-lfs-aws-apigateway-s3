@@ -37,6 +37,11 @@ def lambda_handler(event, context):
                 "statusCode": 400,
                 "message": "not found resource in event"
             }
+        elif ('path' not in event['requestContext']):
+            response = {
+                "statusCode": 400,
+                "message": "not found path in requestContext"
+            }
         elif ('domainName' not in event['requestContext']):
             response = {
                 "statusCode": 400,
@@ -72,19 +77,19 @@ def lambda_handler(event, context):
 
 
 def batch_hander(event, context):
-    resource = event["resource"]
+    request_path = event["requestContext"]["path"]
     endpoint = f'https://{event["requestContext"]["domainName"]}'
     datastore = S3Datastore(os.environ["ARTIFACTS_BUCKET"])
     op = json.loads(event["body"])["operation"]
 
-    return ObjectHandler(op, datastore, endpoint, resource)
+    return ObjectHandler(op, datastore, endpoint, request_path)
 
 
 def verify_object_handler(event, context):
-    resource = event["resource"]
+    request_path = event["requestContext"]["path"]
     endpoint = f'https://{event["requestContext"]["domainName"]}'
     datastore = S3Datastore(os.environ["ARTIFACTS_BUCKET"])
-    return ObjectHandler("verify", datastore, endpoint, resource)
+    return ObjectHandler("verify", datastore, endpoint, request_path)
 
 
 def verify_lock_handler(event, context):

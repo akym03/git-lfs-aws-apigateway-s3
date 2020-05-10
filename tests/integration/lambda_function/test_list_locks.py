@@ -7,9 +7,13 @@ from .create_request import request_with_body
 
 class TestListLocks:
     API_RESOURCE = '/{repoName}/info/lfs/locks'
+    REQUEST_PATH = '/IT/integration-repo/info/lfs/objects/batch/verify'
 
     def test_is_not_implemented(self):
-        given = request_with_body(http_method='GET', resource=TestListLocks.API_RESOURCE)
+        given = request_with_body(
+            http_method='GET',
+            api_resource=TestListLocks.API_RESOURCE,
+            request_path=TestListLocks.REQUEST_PATH)
         given["event"]["body"] = None
 
         response = lambda_handler(given["event"], given["context"])

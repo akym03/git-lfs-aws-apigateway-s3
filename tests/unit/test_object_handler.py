@@ -14,23 +14,24 @@ from ..fake_lambda_context import FakeLambdaContext
 class TestObjectHandler:
 
     UNITTEST_ENDPOINT = "unitTestEndpoint"
+    UNITTEST_REQUEST_PATH = "/UnitTetst/test-repo/info/lfs/objects/batch"
     MISSING_KEY_1 = "missingKey1"
     MISSING_KEY_2 = "missingKey2"
     EXISTING_KEY_1 = "existingKey1"
     EXISTING_KEY_2 = "existingKey2"
     EXISTING_KEY_SIZE = 64
     TRANSFER_TYPE = "basic"
-    VERIFY_URL_REGEX = re.compile(f"^https?://{UNITTEST_ENDPOINT}/.*/verify$")
+    VERIFY_URL_REGEX = re.compile(f"^https?://{UNITTEST_ENDPOINT}/UnitTetst/test-repo/info/lfs/objects/batch/verify$")
 
     def request_with_body(body):
         return {
             "event": {
                 "body": json.dumps(body),
                 "requestContext": {
+                    "path": TestObjectHandler.UNITTEST_REQUEST_PATH,
                     "stage": "unitTest",
                     "domainName": TestObjectHandler.UNITTEST_ENDPOINT
-                },
-                "resource": "/integration/test/resource"
+                }
             },
             "context": FakeLambdaContext()
         }
@@ -69,7 +70,7 @@ class TestObjectHandler:
                 "upload",
                 Datastore(),
                 f"https://{TestObjectHandler.UNITTEST_ENDPOINT}",
-                "/test/resource/path")
+                TestObjectHandler.UNITTEST_REQUEST_PATH)
 
         def test_should_refuse_unkown_transfer_type(self):
             given = TestObjectHandler.request_with_body({"transfers": ["somethingWeird"]})

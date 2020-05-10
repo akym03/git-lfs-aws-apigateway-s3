@@ -10,6 +10,7 @@ from git_lfs_aws_lambda.lambda_function.handler import lambda_handler
 
 class TestVerifyObject:
     API_RESOURCE = '/{repoName}/info/lfs/objects/batch/verify'
+    REQUEST_PATH = '/IT/integration-repo/info/lfs/objects/batch/verify'
 
     MISSING_KEY = "missingKey"
     EXISTING_KEY = "existingKey"
@@ -47,18 +48,26 @@ class TestVerifyObject:
         mocker.patch('boto3.client').return_value = TestVerifyObject.S3Mock()
 
     def test_will_verify_exsisting_objects(self):
-        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
-            "oid": TestVerifyObject.EXISTING_KEY,
-            "size": TestVerifyObject.EXISTING_KEY_SIZE
-        })
+        given = request_with_body(
+            api_resource=TestVerifyObject.API_RESOURCE,
+            request_path=TestVerifyObject.REQUEST_PATH,
+            body={
+                "oid": TestVerifyObject.EXISTING_KEY,
+                "size": TestVerifyObject.EXISTING_KEY_SIZE
+            }
+        )
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 200
 
     def test_will_not_verify_missing_objects(self):
-        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
-            "oid": TestVerifyObject.MISSING_KEY, "size": 1
-        })
+        given = request_with_body(
+            api_resource=TestVerifyObject.API_RESOURCE,
+            request_path=TestVerifyObject.REQUEST_PATH,
+            body={
+                "oid": TestVerifyObject.MISSING_KEY, "size": 1
+            }
+        )
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 404
@@ -69,10 +78,14 @@ class TestVerifyObject:
         assert actual["request_id"] == "testRequestId"
 
     def test_will_not_verify_with_mismatched_sizeds(self):
-        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
-            "oid": TestVerifyObject.EXISTING_KEY,
-            "size": 12
-        })
+        given = request_with_body(
+            api_resource=TestVerifyObject.API_RESOURCE,
+            request_path=TestVerifyObject.REQUEST_PATH,
+            body={
+                "oid": TestVerifyObject.EXISTING_KEY,
+                "size": 12
+            }
+        )
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 411
@@ -83,10 +96,14 @@ class TestVerifyObject:
         assert actual["request_id"] == "testRequestId"
 
     def test_will_fail_gracefully(self):
-        given = request_with_body(resource=TestVerifyObject.API_RESOURCE, body={
-            "oid": "splode",
-            "size": 12
-        })
+        given = request_with_body(
+            api_resource=TestVerifyObject.API_RESOURCE,
+            request_path=TestVerifyObject.REQUEST_PATH,
+            body={
+                "oid": "splode",
+                "size": 12
+            }
+        )
 
         response = lambda_handler(given["event"], given["context"])
 

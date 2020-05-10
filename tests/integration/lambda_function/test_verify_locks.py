@@ -7,9 +7,13 @@ from .create_request import request_with_body
 
 class TestVerifyLocks:
     API_RESOURCE = '/{repoName}/info/lfs/locks/verify'
+    REQUEST_PATH = '/IT/integration-repo/info/lfs/objects/batch/verify'
 
     def test_will_respond_empty(self):
-        given = request_with_body(resource=TestVerifyLocks.API_RESOURCE, body={})
+        given = request_with_body(
+            api_resource=TestVerifyLocks.API_RESOURCE,
+            request_path=TestVerifyLocks.REQUEST_PATH,
+            body={})
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 200

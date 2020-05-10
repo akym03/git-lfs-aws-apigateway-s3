@@ -7,9 +7,14 @@ from .create_request import request_with_body
 
 class TestDeleteLocks:
     API_RESOURCE = '/{repoName}/info/lfs/locks/{id}/unlock'
+    REQUEST_PATH = '/IT/integration-repo/info/lfs/locks/abc-def-123/unlock'
 
     def test_is_not_implemented(self):
-        given = request_with_body(resource=TestDeleteLocks.API_RESOURCE, body={})
+        given = request_with_body(
+            api_resource=TestDeleteLocks.API_RESOURCE,
+            request_path=TestDeleteLocks.REQUEST_PATH,
+            body={}
+        )
 
         response = lambda_handler(given["event"], given["context"])
         assert response["statusCode"] == 501
